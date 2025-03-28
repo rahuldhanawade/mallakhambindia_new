@@ -19,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,10 +34,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.teammates.mallakhambindia.data.Resource
-import com.teammates.mallakhambindia.data.ResponseModel.LocationDataList
+import com.teammates.mallakhambindia.ui.components.LoadingDialog
 import java.util.Calendar
 
 
@@ -66,6 +64,7 @@ fun LoginScreen(navController: NavController? = null, viewModel: LoginScreenView
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
+//            LoadingDialog(viewModel.showDialog)
             HeaderSection()
             Spacer(modifier = Modifier.height(20.dp))
             LoginCard(viewModel)
@@ -151,7 +150,7 @@ fun LoginCard(viewModel: LoginScreenViewModel) {
             )
             if (!isPasswordValid) {
                 Text(
-                    text = "Password must be at least 6 characters",
+                    text = "Password must be at least 6 characters and contain both letters and numbers.",
                     color = Color.Red,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -162,6 +161,7 @@ fun LoginCard(viewModel: LoginScreenViewModel) {
             when (locationData) {
                 is Resource.Loading -> Text("Loading locations...")
                 is Resource.Success -> {
+                    viewModel.showDialog = false
                     val locations = (locationData as Resource.Success<List<String>>).data
                     LocationSpinner(locations, viewModel)
                 }

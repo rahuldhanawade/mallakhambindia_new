@@ -4,6 +4,7 @@ import RetrofitBuilder
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.teammates.mallakhambindia.data.ApiHelperImpl
+import com.teammates.mallakhambindia.data.RequestModel.LoginRequestModel
 import com.teammates.mallakhambindia.data.Resource
 import com.teammates.mallakhambindia.utils.SharedPreferencesHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +17,8 @@ import javax.inject.Inject
 class LoginScreenViewModel @Inject constructor(
     private val sharedPreferencesHelper: SharedPreferencesHelper
 ) : ViewModel() {
+
+    var showDialog = true
 
     private val _email = MutableStateFlow("")
     val email: StateFlow<String> = _email.asStateFlow()
@@ -46,13 +49,13 @@ class LoginScreenViewModel @Inject constructor(
 
     fun onEmailChange(newEmail: String) {
         _email.value = newEmail
-        _isEmailValid.value = android.util.Patterns.EMAIL_ADDRESS.matcher(newEmail).matches()
+        _isEmailValid.value = isValidEmail(newEmail)
         validateForm()
     }
 
     fun onPasswordChange(newPassword: String) {
         _password.value = newPassword
-        _isPasswordValid.value = newPassword.length >= 6
+        _isPasswordValid.value = isValidPassword(newPassword)
         validateForm()
     }
 
@@ -65,7 +68,15 @@ class LoginScreenViewModel @Inject constructor(
         _isLoginEnabled.value = _isEmailValid.value &&
                 _isPasswordValid.value &&
                 _selectedLocation.value != "Select Location"
-    } 
+    }
+
+    private fun isValidEmail(email: String): Boolean {
+        return email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    private fun isValidPassword(password: String): Boolean {
+        return password.length >= 6 && password.any { it.isDigit() } && password.any { it.isLetter() }
+    }
 
     private fun fetchLocations() {
         viewModelScope.launch {
@@ -82,10 +93,29 @@ class LoginScreenViewModel @Inject constructor(
         }
     }
 
+    private fun login(email: String, password: String, selectedLocation: String) {
+        val loginRequestModel = LoginRequestModel(email, password, selectedLocation)
+
+        viewModelScope.launch {
+            apiHelper.getUserLogin(loginRequestModel)
+                .flowOn(Dispatchers.IO)
+                .catch { e ->
+                    _locationListData.value = Resource.Error("Error fetching data: ${e.message}")
+                }
+                .collect { response ->
+                    if (response.success == true) {
+                        _locationListData.value = Resource.Success(response.data)
+                    } else {
+                        _locationListData.value = Resource.Error("Login failed")
+                    }
+                }
+        }
+    }
+
+
     fun onLogin() {
         if (isValidate()) {
-            sharedPreferencesHelper.saveString("email", _email.value)
-            sharedPreferencesHelper.saveString("password", _email.value)
+            login(email.toString(), password.toString(),selectedLocation.toString())
         }
     }
 
