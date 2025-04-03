@@ -64,6 +64,11 @@ class LoginScreenViewModel @Inject constructor(
         fetchLocations()
     }
 
+
+    fun resetNavigation() {
+        _navigateToHome.value = false
+    }
+
     fun onEmailChange(newEmail: String) {
         _email.value = newEmail
         _isEmailValid.value = myValidator.isValidField(newEmail)

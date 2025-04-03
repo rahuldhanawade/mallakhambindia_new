@@ -59,7 +59,10 @@ fun LoginScreen(navController: NavController? = null, viewModel: LoginScreenView
 
     LaunchedEffect(navigateToHome) {
         if (navigateToHome) {
-            navController?.navigate("homescreen")
+            navController?.navigate("homescreen"){
+                popUpTo("loginscreen") { inclusive = true }
+            }
+            viewModel.resetNavigation()
         }
     }
 
