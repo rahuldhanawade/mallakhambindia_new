@@ -7,21 +7,17 @@ import java.util.regex.Pattern
 
 object MyValidator {
 
-    private val emailPattern: Pattern = Pattern.compile(
-        "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
-    )
 
-
-    fun isValidEmail(value: String): Boolean {
-        val trimmedValue = value.trim()
-
-        return emailPattern.matcher(trimmedValue).matches()
+    fun isValidField(value: String): Boolean {
+        return value.isNotEmpty() && value.length >= 4
     }
 
-    fun isValidPassword(value: String): Boolean {
-        val trimmedValue = value.length
+    fun isValidEmail(email: String): Boolean {
+        return email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
 
-        return trimmedValue in 8..15
+    fun isValidPassword(password: String): Boolean {
+        return password.length >= 6 && password.any { it.isDigit() } && password.any { it.isLetter() }
     }
 
 }

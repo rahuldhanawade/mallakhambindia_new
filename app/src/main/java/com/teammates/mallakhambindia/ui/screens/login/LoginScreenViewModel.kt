@@ -1,11 +1,12 @@
 package com.teammates.mallakhambindia.ui.screens.login
 
-import RetrofitBuilder
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.teammates.mallakhambindia.data.ApiHelperImpl
 import com.teammates.mallakhambindia.data.RequestModel.LoginRequestModel
 import com.teammates.mallakhambindia.data.Resource
+import com.teammates.mallakhambindia.repository.MainRepository
+import com.teammates.mallakhambindia.utils.MyValidator
 import com.teammates.mallakhambindia.utils.SharedPreferencesHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -15,8 +16,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginScreenViewModel @Inject constructor(
-    private val sharedPreferencesHelper: SharedPreferencesHelper
+    private val sharedPreferencesHelper: SharedPreferencesHelper,
+    private val mainRepository: MainRepository
 ) : ViewModel() {
+
+    val TAG = "LoginScreenViewModel"
+
+    val myValidator = MyValidator
 
     var showDialog = true
 
@@ -41,7 +47,8 @@ class LoginScreenViewModel @Inject constructor(
     private val _locationListData = MutableStateFlow<Resource<List<String>>>(Resource.Loading)
     val locationListData: StateFlow<Resource<List<String>>> = _locationListData.asStateFlow()
 
-    private val apiHelper = ApiHelperImpl(RetrofitBuilder.apiService)
+    private val _loginData = MutableStateFlow("Select Location")
+    val LoginData: StateFlow<String> = _loginData.asStateFlow()
 
     init {
         fetchLocations()
@@ -49,13 +56,13 @@ class LoginScreenViewModel @Inject constructor(
 
     fun onEmailChange(newEmail: String) {
         _email.value = newEmail
-        _isEmailValid.value = isValidEmail(newEmail)
+        _isEmailValid.value = myValidator.isValidField(newEmail)
         validateForm()
     }
 
     fun onPasswordChange(newPassword: String) {
         _password.value = newPassword
-        _isPasswordValid.value = isValidPassword(newPassword)
+        _isPasswordValid.value = myValidator.isValidPassword(newPassword)
         validateForm()
     }
 
@@ -70,17 +77,9 @@ class LoginScreenViewModel @Inject constructor(
                 _selectedLocation.value != "Select Location"
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        return email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
-
-    private fun isValidPassword(password: String): Boolean {
-        return password.length >= 6 && password.any { it.isDigit() } && password.any { it.isLetter() }
-    }
-
     private fun fetchLocations() {
         viewModelScope.launch {
-            apiHelper.getLocations()
+            mainRepository.getLocations()
                 .flowOn(Dispatchers.IO)
                 .catch { e ->
                     _locationListData.value = Resource.Error("Error fetching data: ${e.message}")
@@ -95,18 +94,19 @@ class LoginScreenViewModel @Inject constructor(
 
     private fun login(email: String, password: String, selectedLocation: String) {
         val loginRequestModel = LoginRequestModel(email, password, selectedLocation)
+        Log.d(TAG, "onLogin: "+loginRequestModel)
 
         viewModelScope.launch {
-            apiHelper.getUserLogin(loginRequestModel)
+            mainRepository.getUserLogin(loginRequestModel)
                 .flowOn(Dispatchers.IO)
                 .catch { e ->
-                    _locationListData.value = Resource.Error("Error fetching data: ${e.message}")
+                    _loginData.value = Resource.Error("Error during login: ${e.message}").toString()
                 }
                 .collect { response ->
                     if (response.success == true) {
-                        _locationListData.value = Resource.Success(response.data)
+                        _loginData.value = Resource.Success(response.token).toString()
                     } else {
-                        _locationListData.value = Resource.Error("Login failed")
+                        _loginData.value = Resource.Error("Login failed").toString()
                     }
                 }
         }
@@ -115,7 +115,8 @@ class LoginScreenViewModel @Inject constructor(
 
     fun onLogin() {
         if (isValidate()) {
-            login(email.toString(), password.toString(),selectedLocation.toString())
+            Log.d(TAG, "onLogin: "+email.value+password.value+selectedLocation.value)
+            login(email.value, password.value,selectedLocation.value)
         }
     }
 

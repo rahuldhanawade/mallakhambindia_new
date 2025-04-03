@@ -126,7 +126,7 @@ fun LoginCard(viewModel: LoginScreenViewModel) {
             OutlinedTextField(
                 value = email,
                 onValueChange = { viewModel.onEmailChange(it) },
-                label = { Text("Email") },
+                label = { Text("Username") },
                 isError = !isEmailValid,
                 modifier = Modifier.fillMaxWidth()
             )

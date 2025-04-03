@@ -2,6 +2,7 @@ package com.teammates.mallakhambindia.data
 
 import com.teammates.mallakhambindia.data.RequestModel.LoginRequestModel
 import com.teammates.mallakhambindia.data.ResponseModel.LocationDataList
+import com.teammates.mallakhambindia.data.ResponseModel.UserLoginData
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -12,6 +13,6 @@ interface ApiService {
     suspend fun getLocations(): LocationDataList
 
     @POST("login")
-    suspend fun getUserLogin(@Body loginRequest: LoginRequestModel): LocationDataList
+    suspend fun getUserLogin(@Body loginRequest: LoginRequestModel): UserLoginData
 
 }
