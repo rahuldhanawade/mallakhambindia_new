@@ -16,4 +16,8 @@ class MainRepository @Inject constructor(private val apiService: ApiService) {
         emit(apiService.getUserLogin(loginRequest))
     }
 
+    fun getUserDetails(token: String) = flow {
+        emit(apiService.getUserDetails(token))
+    }
+
 }

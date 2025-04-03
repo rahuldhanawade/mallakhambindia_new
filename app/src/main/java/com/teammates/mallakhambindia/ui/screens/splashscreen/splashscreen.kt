@@ -10,13 +10,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.teammates.mallakhambindia.R
 
 @Preview
 @Composable
-fun SplashScreen(navController: NavController? = null, viewModel: SplashScreenViewModel = viewModel()) {
+fun SplashScreen(navController: NavController? = null, viewModel: SplashScreenViewModel = hiltViewModel()) {
 
     navController?.let { viewModel.navigateAfterDelay(it) }
 

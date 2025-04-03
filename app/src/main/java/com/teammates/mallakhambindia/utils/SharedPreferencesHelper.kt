@@ -21,6 +21,14 @@ class SharedPreferencesHelper @Inject constructor(
         return sharedPreferences.getString(key, defaultValue).orEmpty()
     }
 
+    fun saveBoolean(key: String, value: Boolean) {
+        sharedPreferences.edit().putBoolean(key, value).apply()
+    }
+
+    fun getBoolean(key: String, defaultValue: Boolean = false): Boolean {
+        return sharedPreferences.getBoolean(key, defaultValue)
+    }
+
     fun clear() {
         sharedPreferences.edit().clear().apply()
     }

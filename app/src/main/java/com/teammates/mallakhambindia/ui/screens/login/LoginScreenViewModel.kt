@@ -1,10 +1,14 @@
 package com.teammates.mallakhambindia.ui.screens.login
 
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.teammates.mallakhambindia.data.RequestModel.LoginRequestModel
 import com.teammates.mallakhambindia.data.Resource
+import com.teammates.mallakhambindia.data.ResponseModel.UserDetailsResponse
 import com.teammates.mallakhambindia.repository.MainRepository
 import com.teammates.mallakhambindia.utils.MyValidator
 import com.teammates.mallakhambindia.utils.SharedPreferencesHelper
@@ -50,6 +54,12 @@ class LoginScreenViewModel @Inject constructor(
     private val _loginData = MutableStateFlow("Select Location")
     val LoginData: StateFlow<String> = _loginData.asStateFlow()
 
+    private val _userDetails = MutableStateFlow<Resource<UserDetailsResponse>>(Resource.Loading)
+    val userDetails: StateFlow<Resource<UserDetailsResponse>> = _userDetails.asStateFlow()
+
+    private val _navigateToHome = MutableLiveData<Boolean>()
+    val navigateToHome: LiveData<Boolean> get() = _navigateToHome
+
     init {
         fetchLocations()
     }
@@ -94,7 +104,7 @@ class LoginScreenViewModel @Inject constructor(
 
     private fun login(email: String, password: String, selectedLocation: String) {
         val loginRequestModel = LoginRequestModel(email, password, selectedLocation)
-        Log.d(TAG, "onLogin: "+loginRequestModel)
+//        Log.d(TAG, "onLogin: "+loginRequestModel)
 
         viewModelScope.launch {
             mainRepository.getUserLogin(loginRequestModel)
@@ -105,6 +115,7 @@ class LoginScreenViewModel @Inject constructor(
                 .collect { response ->
                     if (response.success == true) {
                         _loginData.value = Resource.Success(response.token).toString()
+                        getUserDetails(response.token.toString())
                     } else {
                         _loginData.value = Resource.Error("Login failed").toString()
                     }
@@ -112,10 +123,28 @@ class LoginScreenViewModel @Inject constructor(
         }
     }
 
+    fun getUserDetails(token: String) {
+        viewModelScope.launch {
+            mainRepository.getUserDetails(token)
+                .flowOn(Dispatchers.IO)
+                .catch { e ->
+                    _userDetails.value = Resource.Error("Error: ${e.message}")
+                }
+                .collect { response ->
+                    val jsonResponse = Gson().toJson(response)
+                    sharedPreferencesHelper.saveBoolean("is_logged_in", true)
+                    sharedPreferencesHelper.saveString("token", token)
+                    sharedPreferencesHelper.saveString("userDetails", jsonResponse)
+                    _navigateToHome.value = true
+//                    _userDetails.value = Resource.Success(response)
+                }
+        }
+    }
+
 
     fun onLogin() {
         if (isValidate()) {
-            Log.d(TAG, "onLogin: "+email.value+password.value+selectedLocation.value)
+//            Log.d(TAG, "onLogin: "+email.value+password.value+selectedLocation.value)
             login(email.value, password.value,selectedLocation.value)
         }
     }

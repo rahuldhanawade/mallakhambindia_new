@@ -17,8 +17,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,6 +54,15 @@ val currentYear: Int = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 @Preview
 @Composable
 fun LoginScreen(navController: NavController? = null, viewModel: LoginScreenViewModel = hiltViewModel()) {
+
+    val navigateToHome by viewModel.navigateToHome.observeAsState(false)
+
+    LaunchedEffect(navigateToHome) {
+        if (navigateToHome) {
+            navController?.navigate("homescreen")
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
